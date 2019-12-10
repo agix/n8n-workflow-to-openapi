@@ -44,7 +44,7 @@ const n8nUrl = process.env.N8N_URL || 'http://127.0.0.1:5678';
         description: notes || '',
         tags: [workflow.data.name],
       };
-      const webhookUrl = `/webhooks/${workflowId}/${encodeURI(
+      const webhookUrl = `/webhook/${workflowId}/${encodeURI(
         name.toLowerCase(),
       )}/${parameters.path}`;
       if (typeof openAPIBase.paths[webhookUrl] === 'undefined') {
