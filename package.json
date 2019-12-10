@@ -1,0 +1,33 @@
+{
+  "name": "n8n-workflow-to-openapi",
+  "version": "0.0.1",
+  "description": "Create openAPI yaml file from n8n workflow webhooks",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "lint": "./node_modules/.bin/eslint --fix --config ./config/eslintrc.yml index.js",
+    "lint-report": "yarn run lint ; yarn run lint -o eslint.json -f json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/agix/n8n-workflow-to-openapi"
+  },
+  "bugs": {
+    "url": "https://github.com/agix/n8n-workflow-to-openapi/issues"
+  },
+  "author": "agix",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^6.7.2",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-config-prettier": "^6.7.0",
+    "eslint-plugin-import": "^2.19.1",
+    "eslint-plugin-prettier": "^3.1.1",
+    "prettier": "^1.19.1"
+  },
+  "dependencies": {
+    "axios": "^0.19.0",
+    "dotenv": "^8.2.0",
+    "yaml": "^1.7.2"
+  }
+}

@@ -1,0 +1,22 @@
+plugins:
+  - "prettier"
+extends:
+  - "eslint:recommended"
+  - "airbnb-base"
+  - "plugin:prettier/recommended"
+
+rules:
+  prefer-destructuring: off
+  prettier/prettier:
+    - error
+    - printWidth: 80
+      tabWidth: 2
+      useTabs: false
+      semi: true
+      singleQuote: true
+      trailingComma: "all"
+      bracketSpacing: true
+      arrowParens: "avoid"
+      parser: "flow"
+env:
+  mocha: true

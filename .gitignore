@@ -1,0 +1,10 @@
+config/env
+node_modules
+*.log
+.npmrc
+.eslint
+.nyc_output
+coverage
+eslint.json
+openAPI.yaml
+test.json
