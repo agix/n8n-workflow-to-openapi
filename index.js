@@ -43,6 +43,15 @@ const n8nUrl = process.env.N8N_URL || 'http://127.0.0.1:5678';
       const route = {
         description: notes || '',
         tags: [workflow.data.name],
+        responses: {
+          '200': {
+            content: {
+              schema: {
+                type: 'string',
+              },
+            },
+          },
+        },
       };
       const webhookUrl = `/webhook/${workflowId}/${encodeURI(
         name.toLowerCase(),
