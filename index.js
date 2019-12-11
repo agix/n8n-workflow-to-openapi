@@ -15,6 +15,10 @@ const n8nUrl = process.env.N8N_URL || 'http://127.0.0.1:5678';
     ),
   );
   openAPIBase.paths = {};
+  openAPIBase.tags = [];
+  openAPIBase.components = {
+    securitySchemes: {}
+  };
 
   const workflows = await axios.get(`${n8nUrl}/rest/workflows`);
   const workflowDetails = [];
@@ -39,9 +43,24 @@ const n8nUrl = process.env.N8N_URL || 'http://127.0.0.1:5678';
       },
     };
 
-    webhooks.forEach(({ notes, name, parameters }) => {
+    const startNode = workflow.data.nodes.find(
+      node => node.type === 'n8n-nodes-base.start',
+    );
+    if(webhooks.length > 0) {
+      openAPIBase.tags.push({
+        name: workflow.data.name,
+        description: startNode.notes,
+      })
+    }
+    webhooks.forEach(({ credentials, notes, name, parameters }) => {
+      let noteObject = {
+        description: (notes || ''),
+      }
+      try {
+        noteObject = JSON.parse(notes);
+      } catch(e) {}
       const route = {
-        description: notes || '',
+        ...noteObject,
         tags: [workflow.data.name],
         responses: {
           '200': {
@@ -53,6 +72,25 @@ const n8nUrl = process.env.N8N_URL || 'http://127.0.0.1:5678';
           },
         },
       };
+      if(typeof(credentials) !== 'undefined') {
+        const [securityType, securityName] = Object.entries(credentials)[0];
+        route.security = [{
+          [securityName]: [],
+        }]
+        if(securityType === 'httpHeaderAuth') {
+          openAPIBase.components.securitySchemes[securityName] = {
+            type: 'apiKey',
+            in: 'header',
+            name: securityName,
+          }
+        } else {
+          openAPIBase.components.securitySchemes[securityName] = {
+            type: 'http',
+            scheme: 'basic',
+          }
+        }
+      }
+
       const webhookUrl = `/webhook/${workflowId}/${encodeURI(
         name.toLowerCase(),
       )}/${parameters.path}`;
@@ -71,7 +109,7 @@ const n8nUrl = process.env.N8N_URL || 'http://127.0.0.1:5678';
       const requestBody = {
         required: true,
         content: {
-          'application/json': {
+          'application/x-www-form-urlencoded': {
             schema: {
               type: 'object',
               properties: {},
@@ -99,8 +137,10 @@ const n8nUrl = process.env.N8N_URL || 'http://127.0.0.1:5678';
           } else if (keys[2] === 'query') {
             in_ = 'query';
           }
+          const paramNote = paramNotes[keys[3]] || {};
           if (typeof in_ !== 'undefined') {
             const routeParameter = {
+              ...paramNote,
               name: keys[3],
               in: in_,
               required: true,
@@ -109,51 +149,23 @@ const n8nUrl = process.env.N8N_URL || 'http://127.0.0.1:5678';
               },
             };
 
-            if (typeof paramNotes[keys[3]] !== 'undefined') {
-              if (typeof paramNotes[keys[3]].description !== 'undefined') {
-                routeParameter.description = paramNotes[keys[3]].description;
-              }
-              if (typeof paramNotes[keys[3]].schema !== 'undefined') {
-                routeParameter.schema = paramNotes[keys[3]].schema;
-              }
-            }
-
             routeParameters.push(routeParameter);
           } else if (keys.length > 4) {
-            requestBody.content['application/json'].schema.properties[
+            requestBody.content['application/x-www-form-urlencoded'].schema.properties[
               keys[3]
             ] = {
+              ...paramNote,
               type: 'object',
               required: true,
             };
-
-            if (typeof paramNotes[keys[3]] !== 'undefined') {
-              if (typeof paramNotes[keys[3]].description !== 'undefined') {
-                requestBody.content['application/json'].schema.properties[
-                  keys[3]
-                ].description = paramNotes[keys[3]].description;
-              }
-              if (typeof paramNotes[keys[3]].properties !== 'undefined') {
-                requestBody.content['application/json'].schema.properties[
-                  keys[3]
-                ].properties = paramNotes[keys[3]].properties;
-              }
-            }
           } else {
-            requestBody.content['application/json'].schema.properties[
+            requestBody.content['application/x-www-form-urlencoded'].schema.properties[
               keys[3]
             ] = {
+              ...paramNote,
               type: 'string',
               required: true,
             };
-            if (
-              typeof paramNotes[keys[3]] !== 'undefined' &&
-              typeof paramNotes[keys[3]].description !== 'undefined'
-            ) {
-              requestBody.content['application/json'].schema.properties[
-                keys[3]
-              ].example = paramNotes[keys[3]].description;
-            }
           }
         });
       });
@@ -162,9 +174,10 @@ const n8nUrl = process.env.N8N_URL || 'http://127.0.0.1:5678';
         route.parameters = routeParameters;
       }
       if (
-        Object.keys(requestBody.content['application/json'].schema.properties)
+        Object.keys(requestBody.content['application/x-www-form-urlencoded'].schema.properties)
           .length !== 0
       ) {
+        requestBody.content['application/json'] = requestBody.content['application/x-www-form-urlencoded'];
         route.requestBody = requestBody;
       }
 
