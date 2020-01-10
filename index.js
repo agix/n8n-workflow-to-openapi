@@ -49,26 +49,38 @@ const n8nUrl = process.env.N8N_URL || 'http://127.0.0.1:5678';
     if(webhooks.length > 0) {
       openAPIBase.tags.push({
         name: workflow.data.name,
-        description: startNode.notes,
+        description: startNode.notes || '',
       })
     }
     webhooks.forEach(({ credentials, notes, name, parameters }) => {
+      const defaultResponseSchema = {
+        'text/plain': {
+          schema: {
+            type: 'string',
+            example: 'test',
+          }
+        }
+      }
+
       let noteObject = {
         description: (notes || ''),
+        responseDescription: '',
+        responseSchema: defaultResponseSchema,
       }
       try {
         noteObject = JSON.parse(notes);
       } catch(e) {}
+      const responseDescription = noteObject.responseDescription || '';
+      const responseSchema = noteObject.responseSchema || defaultResponseSchema;
+      delete noteObject.responseDescription;
+      delete noteObject.responseSchema;
       const route = {
         ...noteObject,
         tags: [workflow.data.name],
         responses: {
           '200': {
-            content: {
-              schema: {
-                type: 'string',
-              },
-            },
+            description: responseDescription,
+            content: {...responseSchema},
           },
         },
       };
@@ -107,10 +119,10 @@ const n8nUrl = process.env.N8N_URL || 'http://127.0.0.1:5678';
       );
       const routeParameters = [];
       const requestBody = {
-        required: true,
         content: {
           'application/x-www-form-urlencoded': {
             schema: {
+              required: [],
               type: 'object',
               properties: {},
             },
@@ -151,20 +163,24 @@ const n8nUrl = process.env.N8N_URL || 'http://127.0.0.1:5678';
 
             routeParameters.push(routeParameter);
           } else if (keys.length > 4) {
+            if(requestBody.content['application/x-www-form-urlencoded'].schema.required.includes(keys[3]) === false) {
+              requestBody.content['application/x-www-form-urlencoded'].schema.required.push(keys[3])
+            }
             requestBody.content['application/x-www-form-urlencoded'].schema.properties[
               keys[3]
             ] = {
               ...paramNote,
               type: 'object',
-              required: true,
             };
           } else {
+            if(requestBody.content['application/x-www-form-urlencoded'].schema.required.includes(keys[3]) === false) {
+              requestBody.content['application/x-www-form-urlencoded'].schema.required.push(keys[3])
+            }
             requestBody.content['application/x-www-form-urlencoded'].schema.properties[
               keys[3]
             ] = {
               ...paramNote,
               type: 'string',
-              required: true,
             };
           }
         });
