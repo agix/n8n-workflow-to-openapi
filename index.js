@@ -169,8 +169,8 @@ const n8nUrl = process.env.N8N_URL || 'http://127.0.0.1:5678';
             requestBody.content['application/x-www-form-urlencoded'].schema.properties[
               keys[3]
             ] = {
-              ...paramNote,
               type: 'object',
+              ...paramNote,
             };
           } else {
             if(requestBody.content['application/x-www-form-urlencoded'].schema.required.includes(keys[3]) === false) {
@@ -179,8 +179,8 @@ const n8nUrl = process.env.N8N_URL || 'http://127.0.0.1:5678';
             requestBody.content['application/x-www-form-urlencoded'].schema.properties[
               keys[3]
             ] = {
-              ...paramNote,
               type: 'string',
+              ...paramNote,
             };
           }
         });
