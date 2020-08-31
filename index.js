@@ -52,7 +52,8 @@ const n8nUrl = process.env.N8N_URL || 'http://127.0.0.1:5678';
         description: startNode.notes || '',
       })
     }
-    webhooks.forEach(({ credentials, notes, name, parameters }) => {
+
+    webhooks.forEach(({ credentials, notes, name, parameters, webhookId }) => {
       const defaultResponseSchema = {
         'text/plain': {
           schema: {
@@ -102,10 +103,15 @@ const n8nUrl = process.env.N8N_URL || 'http://127.0.0.1:5678';
           }
         }
       }
+      let webhookUrl;
+      if(typeof(webhookId) === 'undefined') {
+        webhookUrl = `/webhook/${workflowId}/${encodeURI(
+          name.toLowerCase(),
+        )}/${parameters.path}`;
+      } else {
+        webhookUrl = `/webhook/${parameters.path}`;
+      }
 
-      const webhookUrl = `/webhook/${workflowId}/${encodeURI(
-        name.toLowerCase(),
-      )}/${parameters.path}`;
       if (typeof openAPIBase.paths[webhookUrl] === 'undefined') {
         openAPIBase.paths[webhookUrl] = {};
       }
